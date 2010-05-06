@@ -1,0 +1,99 @@
+<h1 id="introduction">Introduction</h1>
+
+<p>Being versed in many languages, from time to time we find ourselves coding in one language and longing for the features of another. One such feature missing from Java but built-into PHP is a reliable way of interpreting human descriptions of time into a machine-readable timestamp.</p>
+
+<p>StringToTime for Java is an implementation of PHP&#8217;s strtotime function, which accepts English descriptions of time like next Tuesday and produces a Unix timestamp of the resulting date. Our Java implementation is a subclass of java.util.Date, so assuming you give it something it can understand, the resulting object is ready and willing to double as a date with no further interpretation needed.</p>
+
+<h1 id="gettingstarted">Getting Started</h1>
+
+<p>First, download the library package from this repository&#8217;s project downloads.</p>
+
+<p>Next, add the stringtotime library (JAR file) to your Java project.</p>
+
+<p>Finally, give it a test run. To test the library, just create an instance of com.clutch.dates.StringToTime with your test string.</p>
+
+<pre><code>import com.clutch.dates.*;  
+
+StringToTime date = new StringToTime("next Tuesday");
+
+assert(date instanceof java.util.Date, "All StringToTime instances of also Date objects.");
+</code></pre>
+
+<p>Here are some examples of expressions of time that StringToTime understands</p>
+
+<ul>
+<li>now</li>
+<li>today</li>
+<li>midnight</li>
+<li>morning</li>
+<li>noon</li>
+<li>afternoon</li>
+<li>evening</li>
+<li>tonight</li>
+<li>tomorrow</li>
+<li>tomorrow morning</li>
+<li>noon tomorrow and tomorrow noon</li>
+<li>tomorrow afternoon</li>
+<li>yesterday</li>
+<li>all the permutations of yesterday and morning, noon, afternoon, and evening</li>
+<li>date and time strings</li>
+<li>incremental and decremental expressions like +1 day or -1 week</li>
+<li>virtually any combination of the above!</li>
+</ul>
+
+<h1 id="otherwaystousestringtotime">Other Ways to Use StringToTime</h1>
+
+<p>By default, all expressions of time are calculated from the current time. So +1 day would return a timestamp equal to the current time plus twenty-four hours. You can alter the reference date by passing a Date or Long value as the second parameter to the constructor.</p>
+
+<pre><code>StringToDate date1 = new StringToDate("+1 day", 372920400000L); // the day after my birthday
+
+// of course, you could just pass an instance of StringToDate...
+StringToDate date2 = new StringToDate("+1 day", new StringToTime("October 26, 1981"));
+assert(date1.getTime() == date2.getTime());
+
+// then again, it would be easiest just to pose a single expression
+StringToDate date3 = new StringToDate("October 26, 1981 +1 day");
+assert(date1.getTime() == date3.getTime());
+</code></pre>
+
+<p>In addition to interpretation on instantiation, there are three static methods that may be used to obtain different expressions of time. They are</p>
+
+<pre><code>Calendar cal = StringToTime.cal("next Tuesday");
+
+Long time = StringToTime.time("next Tuesday");
+
+Date date = StringToTime.date("next Tuesday"); // essentially the same as new StringToTime("next Tuesday");
+</code></pre>
+
+<p>If you do create an instance of StringToTime, we&#8217;ve made it easy to format the resulting date value with a SimpleDateFormat expression.</p>
+
+<pre><code>StringToTime date = new StringToTime("next Tuesday");
+
+String formatted = date.format("MM/dd/yyyy");
+</code></pre>
+
+<h1 id="frequentlyaskedquestions">Frequently Asked Questions</h1>
+
+<h2 id="igivestringtotimecodeexpressioncodebutitdoesntunderstand.why">I give StringToTime <code>{expression}</code>, but it doesn&#8217;t understand. Why?</h2>
+
+<p>StringToTime doesn&#8217;t understand everything (yet), including some notable exceptions like date/time standard ISO 8601. The thing is, not many people type dates in an ISO 8601 standard format. That being said, if you feel like you can make the case for an expression StringToTime should understand, send it to acollegeman@clutch-inc.com.</p>
+
+<h2 id="theframeworkimusingsupportsjavapropertyeditors.howdoimakestringtotimetheparserforstringdatevalues">The framework I&#8217;m using supports Java property editors. How do I make StringToTime the parser for String date values?</h2>
+
+<p>We&#8217;ve included com.clutch.dates.DateEditor for just this purpose; however, our editor depends on the ever-versatile Spring Framework. (You can use it in Grails, too!) If you&#8217;re not using the Spring Framework in your own project (or Grails, which is built on top of Spring), then you&#8217;ll have to write your own editor.</p>
+
+<h2 id="aboutclutch">About Clutch</h2>
+
+<p>Clutch was founded in January 2000 providing web application development and support for the government sector. Since then, we have grown significantly. Each member of our team brings his or her own experiences and ideas to every project.</p>
+
+<p>What&#8217;s Different About Clutch?</p>
+
+<ul>
+<li>We make complex things simple.</li>
+<li>We&#8217;re easy to get along with.</li>
+<li>We have great respect for each other.</li>
+<li>We&#8217;ll tell you if we don&#8217;t know the answer; it&#8217;s about honesty.</li>
+<li>We&#8217;re very good at balancing the big picture with the details.</li>
+<li>We&#8217;re serious about what we do but we don&#8217;t take ourselves too seriously.</li>
+<li>Learn more at <a href="http://clutch-inc.com">http://clutch-inc.com</a></li>
+</ul>
