@@ -666,7 +666,7 @@ public class StringToTime extends Date {
 						Calendar ref = Calendar.getInstance();
 						ref.setTime(new SimpleDateFormat("MMM d, y").parse(String.format("%s 1, 1970", m.group(1))));
 						if (cal.get(Calendar.MONTH) >= ref.get(Calendar.MONTH))
-							cal.set(Calendar.YEAR, cal.get(Calendar.YEAR)+1);
+							cal.set(Calendar.YEAR, cal.get(Calendar.YEAR));
 						cal.set(Calendar.MONTH, ref.get(Calendar.MONTH));
 						
 						return new Date(cal.getTimeInMillis());
@@ -687,7 +687,7 @@ public class StringToTime extends Date {
 						Calendar ref = Calendar.getInstance();
 						ref.setTime(new SimpleDateFormat("M/d/y").parse(String.format("%s/%s/1970", m.group(1), m.group(3))));
 						if (cal.get(Calendar.MONTH) >= ref.get(Calendar.MONTH))
-							cal.set(Calendar.YEAR, cal.get(Calendar.YEAR)+1);
+							cal.set(Calendar.YEAR, cal.get(Calendar.YEAR));
 						cal.set(Calendar.MONTH, ref.get(Calendar.MONTH));
 						cal.set(Calendar.DATE, ref.get(Calendar.DATE));
 						
@@ -699,7 +699,7 @@ public class StringToTime extends Date {
 						Calendar ref = Calendar.getInstance();
 						ref.setTime(new SimpleDateFormat("MMM d, y").parse(String.format("%s %s, 1970", m.group(1), m.group(2))));
 						if (cal.get(Calendar.MONTH) >= ref.get(Calendar.MONTH))
-							cal.set(Calendar.YEAR, cal.get(Calendar.YEAR)+1);
+							cal.set(Calendar.YEAR, cal.get(Calendar.YEAR));
 						cal.set(Calendar.MONTH, ref.get(Calendar.MONTH));
 						cal.set(Calendar.DATE, ref.get(Calendar.DATE));
 						
