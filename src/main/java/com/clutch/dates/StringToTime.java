@@ -11,7 +11,6 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.util.Assert;
 
 /**
  * A Java implementation of the PHP function strtotime(String, int): accepts various expressions of time
@@ -239,9 +238,9 @@ public class StringToTime extends Date {
 	
 	public StringToTime(Object dateTimeString, Date now, String simpleDateFormat) {
 		super(0);
-		Assert.notNull(dateTimeString);
-		Assert.notNull(now);
-		Assert.notNull(simpleDateFormat);
+		assert dateTimeString != null;
+        assert now != null;
+        assert simpleDateFormat != null;
 		
 		this.dateTimeString = dateTimeString;
 		this.simpleDateFormat = simpleDateFormat;
