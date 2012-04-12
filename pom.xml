@@ -3,7 +3,7 @@
   <groupId>com.clutch.dates</groupId>
   <artifactId>stringtotime</artifactId>
   <name>stringtotime</name>
-  <version>1.0.5</version>
+  <version>1.0.6</version>
   <description>PHP strtotime emulation for Java</description>
   <build>
     <plugins>
