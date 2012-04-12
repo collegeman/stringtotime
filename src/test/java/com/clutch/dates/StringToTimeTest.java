@@ -3,6 +3,7 @@ package com.clutch.dates;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 import junit.framework.TestCase;
 
@@ -122,7 +123,8 @@ public class StringToTimeTest extends TestCase {
 	public void testInstancePattern() {
 		StringToTime date = new StringToTime("26 October 1981");
 		BeanWrapper bean = new BeanWrapperImpl(date);
-		Long myBirthday = 372920400000L;
+		Calendar cal = new GregorianCalendar(1981, Calendar.OCTOBER, 26);
+		Long myBirthday = cal.getTimeInMillis();
 		
 		// string value of the StringToTime object is the timestamp
 		assertEquals(myBirthday, new Long(date.getTime()));
@@ -141,8 +143,6 @@ public class StringToTimeTest extends TestCase {
 		assertEquals(now, date);
 		
 		// calendar property
-		Calendar cal = Calendar.getInstance();
-		cal.setTimeInMillis(myBirthday);
 		assertEquals(cal, bean.getPropertyValue("cal"));
 		
 		// format on demand
@@ -310,17 +310,9 @@ public class StringToTimeTest extends TestCase {
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(now);
 		
-		// if this month is greater than or equal to our test month (January)
-		if (cal.get(Calendar.MONTH) >= 1) // then the year on the date returned should be next year
-			assertEquals(cal.get(Calendar.YEAR)+1, new StringToTime("January", now).getCal().get(Calendar.YEAR));
-		else // otherwise, it should be this year
-			assertEquals(cal.get(Calendar.YEAR), new StringToTime("January", now).getCal().get(Calendar.YEAR));
-		
-		// if this month is greater than or equal to our test month (December)
-		if (cal.get(Calendar.MONTH) >= 12) // then the year on the date returned should be next year
-			assertEquals(cal.get(Calendar.YEAR)+1, new StringToTime("December", now).getCal().get(Calendar.YEAR));
-		else // otherwise, it should be this year
-			assertEquals(cal.get(Calendar.YEAR), new StringToTime("December", now).getCal().get(Calendar.YEAR));
+		// it should be this year
+		assertEquals(cal.get(Calendar.YEAR), new StringToTime("January", now).getCal().get(Calendar.YEAR));
+        assertEquals(cal.get(Calendar.YEAR), new StringToTime("December", now).getCal().get(Calendar.YEAR));
 	}
 	
 	public void testDayOfWeek() throws Exception {
