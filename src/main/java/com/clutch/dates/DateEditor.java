@@ -17,7 +17,7 @@ public class DateEditor extends PropertyEditorSupport implements PropertyEditorR
 			throw new IllegalArgumentException(String.format("[%s] is not a date.", text));
 	}
 
-	@Override
+//	@Override
 	public void registerCustomEditors(PropertyEditorRegistry registry) {
 		registry.registerCustomEditor(Date.class, new DateEditor());
 		registry.registerCustomEditor(Date.class, new DateEditor());
