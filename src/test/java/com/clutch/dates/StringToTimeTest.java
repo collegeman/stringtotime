@@ -7,9 +7,6 @@ import java.util.GregorianCalendar;
 
 import junit.framework.TestCase;
 
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.BeanWrapperImpl;
-
 public class StringToTimeTest extends TestCase {
 
 	public void testMySqlDateFormat() {
@@ -118,35 +115,6 @@ public class StringToTimeTest extends TestCase {
 		// date
 		Date date = (Date) StringToTime.date("now", now);
 		assertEquals(new Date(now.getTime()), date);
-	}
-
-	public void testInstancePattern() {
-		StringToTime date = new StringToTime("26 October 1981");
-		BeanWrapper bean = new BeanWrapperImpl(date);
-		Calendar cal = new GregorianCalendar(1981, Calendar.OCTOBER, 26);
-		Long myBirthday = cal.getTimeInMillis();
-		
-		// string value of the StringToTime object is the timestamp
-		assertEquals(myBirthday, new Long(date.getTime()));
-		
-		// formatting controlled by constructor
-		date = new StringToTime("26 October 1981", "d MMM yyyy");
-		assertEquals("26 Oct 1981", date.toString());
-		date = new StringToTime("26 October 1981", "M/d/yy");
-		assertEquals("10/26/81", date.toString());
-		
-		// time property
-		assertEquals(myBirthday, bean.getPropertyValue("time"));
-		
-		// date property
-		Date now = new Date(myBirthday);
-		assertEquals(now, date);
-		
-		// calendar property
-		assertEquals(cal, bean.getPropertyValue("cal"));
-		
-		// format on demand
-		assertEquals("October 26, 1981", date.format("MMMM d, yyyy"));
 	}
 	
 	public void testNow() {
