@@ -17,38 +17,13 @@ import ch.qos.logback.classic.Level;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 
 /**
  * A Java implementation of the PHP function strtotime(String, int): accepts
  * various expressions of time
- * in <code>String</code> format, and instantiates a {@link java.util.Date}
+ * in <code>String</code> format, and returns a timestamp or {@link DateTime}
  * object.
- * 
- * <p>
- * There are two ways to use <code>StringToTime</code> to parse dates:
- * <ul>
- * <li>static methods ({@link #time(Object)}, {@link #date(Object)},
- * {@link #cal(Object)})</li>
- * <li>creating an instance of <code>StringToTime</code> with
- * {@link #StringToTime(Object)}</li>
- * </ul>
- * </p>
- * 
- * <p>
- * The static methods provide a UNIX-style timestamp, a {@link java.util.Date}
- * instance, or a {@link java.util.Calendar} instance. In the event the time
- * expression provided is invalid, these methods return
- * <code>Boolean.FALSE</code>.
- * </p>
- * 
- * <p>
- * Instances of <code>StringToTime</code> inherit from {@link java.util.Date};
- * so, when instantiated with an expression that the algorithm recognizes, the
- * resulting instance of <code>StringToTime</code> can be passed to any method
- * or caller requiring a {@link java.util.Date} object. Unlike the static
- * methods, attempting to create a <code>StringToTime</code> instance with an
- * invalid expression of time results in a {@link StringToTimeException}.
- * </p>
  * 
  * <h2>Valid expressions of time</h2>
  * 
@@ -98,152 +73,65 @@ import com.google.common.base.Strings;
  * @since JRE 1.5.0
  * @see http://us3.php.net/manual/en/function.strtotime.php
  */
-public class StringToTime extends Date {
+public class StringToTime {
 
 	/**
-	 * @deprecated use {@link StringToTime#parseTime(String)} or
-	 *             {@link StringToTime#parseDateTime(String)} instead.
-	 */
-	@Deprecated
-	public static Object cal(Object dateTimeString) {
-		return cal(dateTimeString, new Date());
-	}
-
-	/**
-	 * @deprecated use {@link StringToTime#parseTime(String)} or
-	 *             {@link StringToTime#parseDateTime(String)} instead.
-	 */
-	@Deprecated
-	public static Object cal(Object dateTimeString, Date now) {
-		Object date = date(dateTimeString, now);
-		if(Boolean.FALSE.equals(date))
-			return Boolean.FALSE;
-		else {
-			Calendar cal = Calendar.getInstance();
-			cal.setTime((Date) date);
-			return cal;
-		}
-	}
-
-	/**
-	 * @deprecated use {@link StringToTime#parseTime(String)} or
-	 *             {@link StringToTime#parseDateTime(String)} instead.
-	 */
-	@Deprecated
-	public static Object date(Object dateTimeString) {
-		return date(dateTimeString, new Date());
-	}
-
-	/**
-	 * @deprecated use {@link StringToTime#parseTime(String)} or
-	 *             {@link StringToTime#parseDateTime(String)} instead.
-	 */
-	@Deprecated
-	public static Object date(Object dateTimeString, Date now) {
-		Object time = time(dateTimeString, now);
-		return (Boolean.FALSE.equals(time)) ? Boolean.FALSE : new Date(
-				(Long) time);
-	}
-
-	/**
-	 * Return a {@link DateTime} object that represents the instant expressed by
-	 * {@code string}.
+	 * Parse {@code string} and return a {@link DateTime} object.
 	 * 
 	 * @param string
-	 * @return the DateTime instant
+	 * @return the corresponding DateTime
 	 */
 	public static DateTime parseDateTime(String string) {
-		Preconditions.checkArgument(!Strings.isNullOrEmpty(string));
-		return new DateTime(new StringToTime(string));
+		return new DateTime(parseLong(string));
 	}
 
 	/**
-	 * A single parameter version of {@link #time(String, Date)}, passing a new
-	 * instance of {@link java.util.Date} as the
-	 * second parameter.
-	 * 
-	 * @param dateTimeString
-	 * @return A {@link java.lang.Long} timestamp representative of
-	 *         <code>dateTimeString</code>, or {@link java.lang.Boolean}
-	 *         <code>false</code>.
-	 * @see #time(String, Date)
-	 * @deprecated use {@link StringToTime#parseTime(String)} or
-	 *             {@link StringToTime#parseDateTime(String)} instead.
-	 */
-	@Deprecated
-	public static Object time(Object dateTimeString) {
-		return time(dateTimeString, new Date());
-	}
-
-	/**
-	 * Parse <code>dateTimeString</code> and produce a timestamp.
-	 * 
-	 * @param dateTimeString
-	 * @param now
-	 * @return <ul>
-	 *         <li>If equal to &quot;now&quot;, return the number of
-	 *         milliseconds since January 1, 1970 or the value of
-	 *         <code>now</code>.</li>
-	 *         <li>If an incremental or decremental statement, e.g., +1 hour or
-	 *         -1 week, or a composite thereof, e.g., +1 hour 1 minute 1 second,
-	 *         returns a date equal to the increment/decrement plus the value of
-	 *         <code>now</code>.
-	 *         </ul>
-	 * @deprecated use {@link StringToTime#parseTime(String)} or
-	 *             {@link StringToTime#parseDateTime(String)} instead.
-	 */
-	@Deprecated
-	public static Object time(Object dateTimeString, Date now) {
-		try {
-			if(dateTimeString == null)
-				return Boolean.FALSE;
-			else {
-				String trimmed = String.valueOf(dateTimeString).trim();
-				for (PatternAndFormat paf : known) {
-					Matcher m = paf.matches(trimmed);
-					if(m.matches()) {
-						Long time = paf.parse(trimmed, now, m);
-						// System.out.println(String.format("[%s] triggered format [%s]: %s",
-						// dateTimeString, paf.f, new Date(time)));
-						log.debug(String.format(
-								"[%s] triggered format [%s]: %s",
-								dateTimeString, paf.f, new Date(time)));
-						return time;
-					}
-				}
-
-				// no match
-
-				log.debug(String.format("Unrecognized date/time string [%s]",
-						dateTimeString));
-				return Boolean.FALSE;
-			}
-		}
-		catch (Exception e) { // thrown by various features of the parser
-			if(!Boolean.parseBoolean(System.getProperty(StringToTime.class
-					+ ".EXCEPTION_ON_PARSE_FAILURE", "false"))) {
-				log.debug(String.format(
-						"Failed to parse [%s] into a java.util.Date instance",
-						dateTimeString));
-				return Boolean.FALSE;
-			}
-			else
-				throw new StringToTimeException(dateTimeString, e);
-		}
-	}
-
-	/**
-	 * Return a unix timestamp with millisecond precision that represents the
-	 * instant expressed by {@code string}.
+	 * Parse {@code string} and return a timestamp with millisecond precision.
 	 * 
 	 * @param string
-	 * @return the long timestamp
+	 * @return the corresponding timestamp
 	 */
-	public static long parseTime(String string) {
-		return parseDateTime(string).getMillis();
-
+	public static long parseLong(String string) {
+		return parseLong(string, new Date());
 	}
 
+	/**
+	 * Parse {@code string} relative to {@code now} and return a timestamp with
+	 * millisecond precision.
+	 * 
+	 * @param string
+	 * @param now
+	 * @return the corresponding timestamp
+	 */
+	private static long parseLong(String string, Date now) {
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(string));
+		try {
+			for (PatternAndFormat paf : known) {
+				Matcher m = paf.matches(string);
+				if(m.matches()) {
+					Long time = paf.parse(string, now, m);
+					log.debug(String.format("{} triggered format {}: {}",
+							string, paf.f, new Date(time)));
+					return time;
+				}
+			}
+			log.debug(String.format("Unrecognized date/time string {}", string));
+			throw new ParseException("Unrecognized date/time string '" + string
+					+ "'", 0);
+		}
+		catch (Exception e) { // thrown by various features of the parser
+			throw Throwables.propagate(e);
+		}
+	}
+
+	/**
+	 * Return the parse result.
+	 * 
+	 * @param trimmedDateTimeString
+	 * @param now
+	 * @return
+	 * @throws ParseException
+	 */
 	private static ParserResult getParserResult(String trimmedDateTimeString,
 			Date now) throws ParseException {
 		for (PatternAndFormat paf : known) {
@@ -260,17 +148,12 @@ public class StringToTime extends Date {
 		return null;
 	}
 
-	private static final long serialVersionUID = 7889493424407815134L;
-
 	private static final Logger log = LoggerFactory
 			.getLogger(StringToTime.class);
 	static {
 		// Set to Level.DEBUG to see information about string parsing logic
 		((ch.qos.logback.classic.Logger) log).setLevel(Level.INFO);
 	}
-
-	// default SimpleDateFormat string is the standard MySQL date format
-	private static final String defaultSimpleDateFormat = "yyyy-MM-dd HH:mm:ss.SSS";
 
 	// An expression of time (hour)(:(minute))?((:(second))(.(millisecond))?)?(
 	// *(am?|pm?))?(RFC 822 time zone|general time zone)?
@@ -374,133 +257,6 @@ public class StringToTime extends Date {
 
 	};
 
-	/** The format to use in {@link #toString()) */
-	private String simpleDateFormat;
-
-	/**
-	 * The {@link java.util.Date} interpreted from {@link #dateTimeString}, or
-	 * {@link java.lang.Boolean} <code>false</code>
-	 */
-	private Object date;
-
-	/**
-	 * @deprecated use {@link StringToTime#parseTime(String)} or
-	 *             {@link StringToTime#parseDateTime(String)} instead.
-	 */
-	@Deprecated
-	public StringToTime() {
-		super();
-		this.date = new Date(this.getTime());
-	}
-
-	/**
-	 * @deprecated use {@link StringToTime#parseTime(String)} or
-	 *             {@link StringToTime#parseDateTime(String)} instead.
-	 */
-	@Deprecated
-	public StringToTime(Date date) {
-		super(date.getTime());
-		this.date = new Date(this.getTime());
-	}
-
-	/**
-	 * @deprecated use {@link StringToTime#parseTime(String)} or
-	 *             {@link StringToTime#parseDateTime(String)} instead.
-	 */
-	@Deprecated
-	public StringToTime(Object dateTimeString) {
-		this(dateTimeString, new Date(), defaultSimpleDateFormat);
-	}
-
-	/**
-	 * @deprecated use {@link StringToTime#parseTime(String)} or
-	 *             {@link StringToTime#parseDateTime(String)} instead.
-	 */
-	@Deprecated
-	public StringToTime(Object dateTimeString, Date now) {
-		this(dateTimeString, now, defaultSimpleDateFormat);
-	}
-
-	/**
-	 * @deprecated use {@link StringToTime#parseTime(String)} or
-	 *             {@link StringToTime#parseDateTime(String)} instead.
-	 */
-	@Deprecated
-	public StringToTime(Object dateTimeString, Date now, String simpleDateFormat) {
-		super(0);
-		assert dateTimeString != null;
-		assert now != null;
-		assert simpleDateFormat != null;
-
-		this.simpleDateFormat = simpleDateFormat;
-
-		date = StringToTime.date(dateTimeString, now);
-		if(!Boolean.FALSE.equals(date))
-			setTime(((Date) date).getTime());
-		else
-			throw new StringToTimeException(dateTimeString);
-	}
-
-	/**
-	 * @deprecated use {@link StringToTime#parseTime(String)} or
-	 *             {@link StringToTime#parseDateTime(String)} instead.
-	 */
-	@Deprecated
-	public StringToTime(Object dateTimeString, Integer now) {
-		this(dateTimeString, new Date(new Long(now)), defaultSimpleDateFormat);
-	}
-
-	/**
-	 * @deprecated use {@link StringToTime#parseTime(String)} or
-	 *             {@link StringToTime#parseDateTime(String)} instead.
-	 */
-	@Deprecated
-	public StringToTime(Object dateTimeString, Long now) {
-		this(dateTimeString, new Date(now), defaultSimpleDateFormat);
-	}
-
-	public StringToTime(Object dateTimeString, String simpleDateFormat) {
-		this(dateTimeString, new Date(), simpleDateFormat);
-	}
-
-	/**
-	 * @param simpleDateFormat
-	 * @see {@link SimpleDateFormat}
-	 * @return Date formatted according to <code>simpleDateFormat</code>
-	 */
-	public String format(String simpleDateFormat) {
-		return new SimpleDateFormat(simpleDateFormat).format(this);
-	}
-
-	/**
-	 * @return Calendar set to timestamp {@link java.util.Date#getTime()}
-	 */
-	public Calendar getCal() {
-		Calendar cal = Calendar.getInstance();
-		cal.setTimeInMillis(super.getTime());
-		return cal;
-	}
-
-	/**
-	 * @return {@link java.util.Date#getTime()}
-	 */
-	public long getTime() {
-		return super.getTime();
-	}
-
-	/**
-	 * @return If {@link #simpleDateFormat} provided in constructor, then
-	 *         attempts to format <code>date</code> accordingly; otherwise,
-	 *         returns the <code>String</code> value of
-	 *         {@link java.util.Date#getTime()}.
-	 */
-	public String toString() {
-		if(simpleDateFormat != null)
-			return new SimpleDateFormat(simpleDateFormat).format(this);
-		else
-			return new SimpleDateFormat("yyyy/dd/MM").format(this); // String.valueOf(super.getTime());
-	}
-
 	private static class Format {
 
 		private static Pattern unit = Pattern
@@ -553,10 +309,10 @@ public class StringToTime extends Date {
 
 					// word expressions, e.g., "now" and "today" and "tonight"
 					if(type == FormatType.WORD) {
-						if("now".equals(dateTimeString))
+						if("now".equalsIgnoreCase(dateTimeString))
 							return (now != null ? now : new Date());
 
-						else if("today".equals(dateTimeString)) {
+						else if("today".equalsIgnoreCase(dateTimeString)) {
 							cal.set(Calendar.HOUR_OF_DAY, 0);
 							cal.set(Calendar.MINUTE, 0);
 							cal.set(Calendar.SECOND, 0);
@@ -564,8 +320,9 @@ public class StringToTime extends Date {
 							return new Date(cal.getTimeInMillis());
 						}
 
-						else if("morning".equals(dateTimeString)
-								|| "this morning".equals(dateTimeString)) {
+						else if("morning".equalsIgnoreCase(dateTimeString)
+								|| "this morning"
+										.equalsIgnoreCase(dateTimeString)) {
 							// by default, this morning begins at 07:00:00.000
 							int thisMorningBeginsAt = Integer.parseInt(System
 									.getProperty(StringToTime.class
@@ -577,7 +334,7 @@ public class StringToTime extends Date {
 							return new Date(cal.getTimeInMillis());
 						}
 
-						else if("noon".equals(dateTimeString)) {
+						else if("noon".equalsIgnoreCase(dateTimeString)) {
 							// noon is 12:00:00.000
 							cal.set(Calendar.HOUR_OF_DAY, 12);
 							cal.set(Calendar.MINUTE, 0);
@@ -586,8 +343,9 @@ public class StringToTime extends Date {
 							return new Date(cal.getTimeInMillis());
 						}
 
-						else if("afternoon".equals(dateTimeString)
-								|| "this afternoon".equals(dateTimeString)) {
+						else if("afternoon".equalsIgnoreCase(dateTimeString)
+								|| "this afternoon"
+										.equalsIgnoreCase(dateTimeString)) {
 							// by default, this afternoon begins at 13:00:00.000
 							int thisAfternoonBeginsAt = Integer
 									.parseInt(System
@@ -602,8 +360,9 @@ public class StringToTime extends Date {
 							return new Date(cal.getTimeInMillis());
 						}
 
-						else if("evening".equals(dateTimeString)
-								|| "this evening".equals(dateTimeString)) {
+						else if("evening".equalsIgnoreCase(dateTimeString)
+								|| "this evening"
+										.equalsIgnoreCase(dateTimeString)) {
 							// by default, this evening begins at 17:00:00.000
 							int thisEveningBeginsAt = Integer.parseInt(System
 									.getProperty(StringToTime.class
@@ -615,7 +374,7 @@ public class StringToTime extends Date {
 							return new Date(cal.getTimeInMillis());
 						}
 
-						else if("tonight".equals(dateTimeString)) {
+						else if("tonight".equalsIgnoreCase(dateTimeString)) {
 							// by default, tonight begins at 20:00:00.000
 							int tonightBeginsAt = Integer.parseInt(System
 									.getProperty(StringToTime.class
@@ -627,58 +386,73 @@ public class StringToTime extends Date {
 							return new Date(cal.getTimeInMillis());
 						}
 
-						else if("midnight".equals(dateTimeString)) {
-							return new StringToTime("00:00:00 +24 hours", now);
+						else if("midnight".equalsIgnoreCase(dateTimeString)) {
+							return new Date(
+									parseLong("00:00:00 +24 hours", now));
 						}
 
-						else if("tomorrow".equals(dateTimeString)) {
-							return new StringToTime("now +24 hours", now);
+						else if("tomorrow".equalsIgnoreCase(dateTimeString)) {
+							return new Date(parseLong("now +24 hours", now));
 						}
 
-						else if("tomorrow morning".equals(dateTimeString)) {
-							return new StringToTime("morning +24 hours", now);
+						else if("tomorrow morning"
+								.equalsIgnoreCase(dateTimeString)) {
+							return new Date(parseLong("morning +24 hours", now));
 						}
 
-						else if("tomorrow noon".equals(dateTimeString)
-								|| "noon tomorrow".equals(dateTimeString)) {
-							return new StringToTime("noon +24 hours", now);
+						else if("tomorrow noon"
+								.equalsIgnoreCase(dateTimeString)
+								|| "noon tomorrow"
+										.equalsIgnoreCase(dateTimeString)) {
+							return new Date(parseLong("noon +24 hours", now));
 						}
 
-						else if("tomorrow afternoon".equals(dateTimeString)) {
-							return new StringToTime("afternoon +24 hours", now);
+						else if("tomorrow afternoon"
+								.equalsIgnoreCase(dateTimeString)) {
+							return new Date(parseLong("afternoon +24 hours",
+									now));
 						}
 
-						else if("tomorrow evening".equals(dateTimeString)) {
-							return new StringToTime("evening +24 hours", now);
+						else if("tomorrow evening"
+								.equalsIgnoreCase(dateTimeString)) {
+							return new Date(parseLong("evening +24 hours", now));
 						}
 
-						else if("tomorrow night".equals(dateTimeString)) {
-							return new StringToTime("tonight +24 hours", now);
+						else if("tomorrow night"
+								.equalsIgnoreCase(dateTimeString)) {
+							return new Date(parseLong("tonight +24 hours", now));
 						}
 
-						else if("yesterday".equals(dateTimeString)) {
-							return new StringToTime("now -24 hours", now);
+						else if("yesterday".equalsIgnoreCase(dateTimeString)) {
+							return new Date(parseLong("now -24 hours", now));
 						}
 
-						else if("yesterday morning".equals(dateTimeString)) {
-							return new StringToTime("morning -24 hours", now);
+						else if("yesterday morning"
+								.equalsIgnoreCase(dateTimeString)) {
+							return new Date(parseLong("morning -24 hours", now));
 						}
 
-						else if("yesterday noon".equals(dateTimeString)
-								|| "noon yesterday".equals(dateTimeString)) {
-							return new StringToTime("noon -24 hours", now);
+						else if("yesterday noon"
+								.equalsIgnoreCase(dateTimeString)
+								|| "noon yesterday"
+										.equalsIgnoreCase(dateTimeString)) {
+							return new Date(parseLong("noon -24 hours", now));
 						}
 
-						else if("yesterday afternoon".equals(dateTimeString)) {
-							return new StringToTime("afternoon -24 hours", now);
+						else if("yesterday afternoon"
+								.equalsIgnoreCase(dateTimeString)) {
+							return new Date(parseLong("afternoon -24 hours",
+									now));
 						}
 
-						else if("yesterday evening".equals(dateTimeString)) {
-							return new StringToTime("evening -24 hours", now);
+						else if("yesterday evening"
+								.equalsIgnoreCase(dateTimeString)) {
+							return new Date(parseLong("evening -24 hours", now));
 						}
 
-						else if("yesterday night".equals(dateTimeString)) {
-							return new StringToTime("tonight -24 hours", now);
+						else if("yesterday night"
+								.equalsIgnoreCase(dateTimeString)) {
+							return new Date(parseLong("tonight -24 hours", now));
 						}
 
 						else
@@ -715,9 +489,10 @@ public class StringToTime extends Date {
 								(ms != null ? new Integer(ms) : 0));
 
 						if(amOrPm != null)
-							cal.set(Calendar.AM_PM, (amOrPm.equals("a")
-									|| amOrPm.equals("am") ? Calendar.AM
-									: Calendar.PM));
+							cal.set(Calendar.AM_PM,
+									(amOrPm.equalsIgnoreCase("a")
+											|| amOrPm.equalsIgnoreCase("am") ? Calendar.AM
+											: Calendar.PM));
 
 						return new Date(cal.getTimeInMillis());
 					}
@@ -732,43 +507,50 @@ public class StringToTime extends Date {
 							String u = units.group(2);
 
 							// second
-							if("s".equals(u) || "sec".equals(u)
-									|| "second".equals(u))
+							if("s".equalsIgnoreCase(u)
+									|| "sec".equalsIgnoreCase(u)
+									|| "second".equalsIgnoreCase(u))
 								cal.set(Calendar.SECOND,
 										cal.get(Calendar.SECOND) + val);
 
 							// minute
-							else if("m".equals(u) || "min".equals(u)
-									|| "minute".equals(u))
+							else if("m".equalsIgnoreCase(u)
+									|| "min".equalsIgnoreCase(u)
+									|| "minute".equalsIgnoreCase(u))
 								cal.set(Calendar.MINUTE,
 										cal.get(Calendar.MINUTE) + val);
 
 							// hour
-							else if("h".equals(u) || "hr".equals(u)
-									|| "hour".equals(u))
+							else if("h".equalsIgnoreCase(u)
+									|| "hr".equalsIgnoreCase(u)
+									|| "hour".equalsIgnoreCase(u))
 								cal.set(Calendar.HOUR_OF_DAY,
 										cal.get(Calendar.HOUR_OF_DAY) + val);
 
 							// day
-							else if("d".equals(u) || "day".equals(u))
+							else if("d".equalsIgnoreCase(u)
+									|| "day".equalsIgnoreCase(u))
 								cal.set(Calendar.DATE, cal.get(Calendar.DATE)
 										+ val);
 
 							// week
-							else if("w".equals(u) || "wk".equals(u)
-									|| "week".equals(u))
+							else if("w".equalsIgnoreCase(u)
+									|| "wk".equalsIgnoreCase(u)
+									|| "week".equalsIgnoreCase(u))
 								cal.set(Calendar.WEEK_OF_YEAR,
 										cal.get(Calendar.WEEK_OF_YEAR) + val);
 
 							// month
-							else if("mo".equals(u) || "mon".equals(u)
-									|| "month".equals(u))
+							else if("mo".equalsIgnoreCase(u)
+									|| "mon".equalsIgnoreCase(u)
+									|| "month".equalsIgnoreCase(u))
 								cal.set(Calendar.MONTH, cal.get(Calendar.MONTH)
 										+ val);
 
 							// year
-							else if("y".equals(u) || "yr".equals(u)
-									|| "year".equals(u))
+							else if("y".equalsIgnoreCase(u)
+									|| "yr".equalsIgnoreCase(u)
+									|| "year".equalsIgnoreCase(u))
 								cal.set(Calendar.YEAR, cal.get(Calendar.YEAR)
 										+ val);
 
@@ -784,15 +566,8 @@ public class StringToTime extends Date {
 
 					// compound expressions
 					else if(type == FormatType.COMPOUND) {
-						Object date = StringToTime.date(m.group(1), now);
-						if(!Boolean.FALSE.equals(date))
-							return (Date) StringToTime.date(m.group(2),
-									(Date) date);
-						else
-							throw new IllegalArgumentException(
-									String.format(
-											"Couldn't parse %s, so couldn't compound with %s",
-											m.group(1), m.group(2)));
+						return new Date(parseLong(m.group(2), new Date(
+								parseLong(m.group(1), now))));
 					}
 
 					// month of the year
@@ -854,13 +629,13 @@ public class StringToTime extends Date {
 											.equals(parsed.type)))
 							return new Date(parsed.timestamp);
 						else {
-							if("week".equals(expr))
+							if("week".equalsIgnoreCase(expr))
 								cal.set(Calendar.WEEK_OF_YEAR,
 										cal.get(Calendar.WEEK_OF_YEAR) + 1);
-							else if("month".equals(expr))
+							else if("month".equalsIgnoreCase(expr))
 								cal.set(Calendar.MONTH,
 										cal.get(Calendar.MONTH) + 1);
-							else if("year".equals(expr))
+							else if("year".equalsIgnoreCase(expr))
 								cal.set(Calendar.YEAR,
 										cal.get(Calendar.YEAR) + 1);
 							else
@@ -882,24 +657,24 @@ public class StringToTime extends Date {
 						if(parsed != null
 								&& (FormatType.MONTH.equals(parsed.type) || FormatType.MONTH_AND_DATE
 										.equals(parsed.type))) {
-							return new StringToTime("-1 year", new Date(
-									parsed.timestamp));
+							return new Date(parseLong("-1 year", new Date(
+									parsed.timestamp)));
 						}
 
 						else if(parsed != null
 								&& FormatType.DAY_OF_WEEK.equals(parsed.type)) {
-							return new StringToTime("-1 week", new Date(
-									parsed.timestamp));
+							return new Date(parseLong("-1 week", new Date(
+									parsed.timestamp)));
 						}
 
 						else {
-							if("week".equals(expr))
+							if("week".equalsIgnoreCase(expr))
 								cal.set(Calendar.WEEK_OF_YEAR,
 										cal.get(Calendar.WEEK_OF_YEAR) - 1);
-							else if("month".equals(expr))
+							else if("month".equalsIgnoreCase(expr))
 								cal.set(Calendar.MONTH,
 										cal.get(Calendar.MONTH) - 1);
-							else if("year".equals(expr))
+							else if("year".equalsIgnoreCase(expr))
 								cal.set(Calendar.YEAR,
 										cal.get(Calendar.YEAR) - 1);
 							else
@@ -940,6 +715,7 @@ public class StringToTime extends Date {
 			}
 		}
 
+		@Override
 		public String toString() {
 			if(sdf != null)
 				return sdf;
