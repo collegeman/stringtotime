@@ -94,6 +94,10 @@ public class StringToTime {
 	public static long parseLong(String string) {
 		return parseLong(string, new Date());
 	}
+	
+	protected static DateTime parseDateTime(String string, Date now){
+		return new DateTime(parseLong(string, now));
+	}
 
 	/**
 	 * Parse {@code string} relative to {@code now} and return a timestamp with
@@ -103,7 +107,7 @@ public class StringToTime {
 	 * @param now
 	 * @return the corresponding timestamp
 	 */
-	private static long parseLong(String string, Date now) {
+	protected static long parseLong(String string, Date now) {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(string));
 		try {
 			for (PatternAndFormat paf : known) {
