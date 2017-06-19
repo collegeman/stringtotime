@@ -1,3 +1,5 @@
+**This project is no longer maintained.** I don't do much Java development anymore, but if you've used this library, reach out and share the story with me: [aaron@withfatpanda.com](mailto:aaron@withfatpanda.com).
+
 # Introduction
 
 Being versed in many languages, from time to time we find ourselves coding in one language and longing for the features of another. One such feature missing from Java but built-into PHP is a reliable way of interpreting human descriptions of time into a machine-readable timestamp.
