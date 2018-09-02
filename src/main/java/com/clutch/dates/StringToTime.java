@@ -634,7 +634,7 @@ public class StringToTime extends Date {
 							
 							// week
 							else if ("w".equals(u) || "wk".equals(u) || "week".equals(u))
-								cal.set(Calendar.WEEK_OF_YEAR, cal.get(Calendar.WEEK_OF_YEAR)+val);
+								cal.set(Calendar.WEEK_OF_MONTH, cal.get(Calendar.WEEK_OF_MONTH)+val);
 							
 							// month
 							else if ("mo".equals(u) || "mon".equals(u) || "month".equals(u))
